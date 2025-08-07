@@ -141,7 +141,9 @@ namespace Packaging.Targets.Tests.Rpm
         }
 
         [Fact]
+#pragma warning disable CA1506
         public void CalculateSignatureTest()
+#pragma warning restore CA1506
         {
             using Stream stream = File.OpenRead(@"Rpm/libplist-2.0.1.151-1.1.x86_64.rpm");
             var originalPackage = RpmPackageReader.Read(stream);
