@@ -4,9 +4,11 @@
     <Description>This package supports the dotnet-pack and dotnet-zip packages. Once you've installed this package together with dotnet-zip or dotnet-tarball, you can run commands such as dotnet zip or dotnet tarball to generate .zip or .tar.gz archives which contain the published output of your project.</Description>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
+  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.5|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
+  
   <!-- Copy build task assemby to build directory -->
   <PropertyGroup>
     <BuildOutputTargetFolder>tools</BuildOutputTargetFolder>
@@ -18,6 +20,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <DevelopmentDependency>true</DevelopmentDependency>
   </PropertyGroup>
+  
   <ItemGroup>
     <!-- MSBuild ships as part of the .NET CLI -->
     <PackageReference Include="Microsoft.Build.Framework" Version="17.14.8">
@@ -39,6 +42,7 @@
     </PackageReference>
     <PackageReference Include="System.Buffers" Version="4.6.1" />
   </ItemGroup>
+  
   <ItemGroup>
     <Content Include="build\*.*">
       <Pack>true</Pack>

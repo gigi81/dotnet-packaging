@@ -143,99 +143,97 @@ namespace Packaging.Targets.Tests.Rpm
         [Fact]
         public void CalculateSignatureTest()
         {
-            using (Stream stream = File.OpenRead(@"Rpm/libplist-2.0.1.151-1.1.x86_64.rpm"))
+            using Stream stream = File.OpenRead(@"Rpm/libplist-2.0.1.151-1.1.x86_64.rpm");
+            var originalPackage = RpmPackageReader.Read(stream);
+
+            RpmPackageCreator creator = new RpmPackageCreator(new PlistFileAnalyzer());
+            Collection<RpmFile> files;
+
+            using (var payloadStream = RpmPayloadReader.GetDecompressedPayloadStream(originalPackage))
+            using (var cpio = new CpioFile(payloadStream, false))
             {
-                var originalPackage = RpmPackageReader.Read(stream);
+                ArchiveBuilder builder = new ArchiveBuilder(new PlistFileAnalyzer());
+                var entries = builder.FromCpio(cpio);
+                files = creator.CreateFiles(entries);
+            }
 
-                RpmPackageCreator creator = new RpmPackageCreator(new PlistFileAnalyzer());
-                Collection<RpmFile> files;
+            // Core routine to populate files and dependencies
+            RpmPackage package = new RpmPackage();
+            var metadata = new PublicRpmMetadata(package);
+            metadata.Name = "libplist";
+            metadata.Version = "2.0.1.151";
+            metadata.Arch = "x86_64";
+            metadata.Release = "1.1";
 
-                using (var payloadStream = RpmPayloadReader.GetDecompressedPayloadStream(originalPackage))
-                using (var cpio = new CpioFile(payloadStream, false))
+            creator.AddPackageProvides(metadata);
+            creator.AddLdDependencies(metadata);
+
+            metadata.Files = files;
+            creator.AddRpmDependencies(metadata, null);
+
+            PlistMetadata.ApplyDefaultMetadata(metadata);
+
+            metadata.Vendor = "obs://build.opensuse.org/home:qmfrederik";
+            metadata.Description = "libplist is a library for manipulating Apple Binary and XML Property Lists";
+            metadata.Url = "http://www.libimobiledevice.org/";
+
+            creator.CalculateHeaderOffsets(package);
+
+            // Make sure the header is really correct
+            using (Stream originalHeaderStream = new SubStream(
+                       originalPackage.Stream,
+                       originalPackage.HeaderOffset,
+                       originalPackage.PayloadOffset - originalPackage.HeaderOffset,
+                       leaveParentOpen: true,
+                       readOnly: true))
+            using (Stream headerStream = creator.GetHeaderStream(package))
+            {
+                byte[] originalData = new byte[originalHeaderStream.Length];
+                originalHeaderStream.ReadExactly(originalData);
+
+                byte[] data = new byte[headerStream.Length];
+                headerStream.ReadExactly(data, 0, data.Length);
+
+                int delta = 0;
+                int dataDelta = 0;
+                IndexTag tag;
+                for (int i = 0; i < data.Length; i++)
                 {
-                    ArchiveBuilder builder = new ArchiveBuilder(new PlistFileAnalyzer());
-                    var entries = builder.FromCpio(cpio);
-                    files = creator.CreateFiles(entries);
+                    if (originalData[i] != data[i])
+                    {
+                        delta = i;
+                        dataDelta = delta - package.Header.Records.Count * Marshal.SizeOf<IndexHeader>();
+                        tag = package.Header.Records.OrderBy(r => r.Value.Header.Offset).Last(r => r.Value.Header.Offset <= dataDelta).Key;
+
+                        break;
+                    }
                 }
 
-                // Core routine to populate files and dependencies
-                RpmPackage package = new RpmPackage();
-                var metadata = new PublicRpmMetadata(package);
-                metadata.Name = "libplist";
-                metadata.Version = "2.0.1.151";
-                metadata.Arch = "x86_64";
-                metadata.Release = "1.1";
+                Assert.Equal(originalData, data);
+            }
 
-                creator.AddPackageProvides(metadata);
-                creator.AddLdDependencies(metadata);
+            var krgen = PgpSigner.GenerateKeyRingGenerator("dotnet", "dotnet");
+            var secretKeyRing = krgen.GenerateSecretKeyRing();
+            var privateKey = secretKeyRing.GetSecretKey().ExtractPrivateKey("dotnet".ToCharArray());
 
-                metadata.Files = files;
-                creator.AddRpmDependencies(metadata, null);
+            using (var payload = RpmPayloadReader.GetCompressedPayloadStream(originalPackage))
+            {
+                // Header should be OK now (see previous test), so now get the signature block and the
+                // trailer
+                creator.CalculateSignature(package, privateKey, payload);
+                creator.CalculateSignatureOffsets(package);
 
-                PlistMetadata.ApplyDefaultMetadata(metadata);
-
-                metadata.Vendor = "obs://build.opensuse.org/home:qmfrederik";
-                metadata.Description = "libplist is a library for manipulating Apple Binary and XML Property Lists";
-                metadata.Url = "http://www.libimobiledevice.org/";
-
-                creator.CalculateHeaderOffsets(package);
-
-                // Make sure the header is really correct
-                using (Stream originalHeaderStream = new SubStream(
-                    originalPackage.Stream,
-                    originalPackage.HeaderOffset,
-                    originalPackage.PayloadOffset - originalPackage.HeaderOffset,
-                    leaveParentOpen: true,
-                    readOnly: true))
-                using (Stream headerStream = creator.GetHeaderStream(package))
+                foreach (var record in originalPackage.Signature.Records)
                 {
-                    byte[] originalData = new byte[originalHeaderStream.Length];
-                    originalHeaderStream.Read(originalData, 0, originalData.Length);
-
-                    byte[] data = new byte[headerStream.Length];
-                    headerStream.Read(data, 0, data.Length);
-
-                    int delta = 0;
-                    int dataDelta = 0;
-                    IndexTag tag;
-                    for (int i = 0; i < data.Length; i++)
+                    if (record.Key == SignatureTag.RPMTAG_HEADERSIGNATURES)
                     {
-                        if (originalData[i] != data[i])
-                        {
-                            delta = i;
-                            dataDelta = delta - package.Header.Records.Count * Marshal.SizeOf<IndexHeader>();
-                            tag = package.Header.Records.OrderBy(r => r.Value.Header.Offset).Last(r => r.Value.Header.Offset <= dataDelta).Key;
-
-                            break;
-                        }
+                        continue;
                     }
 
-                    Assert.Equal(originalData, data);
+                    this.AssertTagEqual(record.Key, originalPackage, package);
                 }
 
-                var krgen = PgpSigner.GenerateKeyRingGenerator("dotnet", "dotnet");
-                var secretKeyRing = krgen.GenerateSecretKeyRing();
-                var privateKey = secretKeyRing.GetSecretKey().ExtractPrivateKey("dotnet".ToCharArray());
-
-                using (var payload = RpmPayloadReader.GetCompressedPayloadStream(originalPackage))
-                {
-                    // Header should be OK now (see previous test), so now get the signature block and the
-                    // trailer
-                    creator.CalculateSignature(package, privateKey, payload);
-                    creator.CalculateSignatureOffsets(package);
-
-                    foreach (var record in originalPackage.Signature.Records)
-                    {
-                        if (record.Key == SignatureTag.RPMTAG_HEADERSIGNATURES)
-                        {
-                            continue;
-                        }
-
-                        this.AssertTagEqual(record.Key, originalPackage, package);
-                    }
-
-                    this.AssertTagEqual(SignatureTag.RPMTAG_HEADERSIGNATURES, originalPackage, package);
-                }
+                this.AssertTagEqual(SignatureTag.RPMTAG_HEADERSIGNATURES, originalPackage, package);
             }
         }
 
@@ -309,10 +307,10 @@ namespace Packaging.Targets.Tests.Rpm
                 var package = RpmPackageReader.Read(targetStream);
 
                 var metadata = new RpmMetadata(package);
-                Assert.Equal(metadata.Version, versionString);
-                Assert.Equal(metadata.Name, nameString);
-                Assert.Equal(metadata.Arch, archString);
-                Assert.Equal(metadata.Release, releaseString);
+                Assert.Equal(versionString, metadata.Version);
+                Assert.Equal(nameString, metadata.Name);
+                Assert.Equal(archString, metadata.Arch);
+                Assert.Equal(releaseString, metadata.Release);
                 Assert.StartsWith(preInstScript, metadata.PreIn);
                 Assert.StartsWith(postInstScript, metadata.PostIn);
                 Assert.StartsWith(preRemoveScript, metadata.PreUn);
@@ -409,8 +407,8 @@ namespace Packaging.Targets.Tests.Rpm
 
                 while (originalStream.Position < originalStream.Length)
                 {
-                    originalStream.Read(originalBuffer, 0, originalBuffer.Length);
-                    targetStream.Read(targetBuffer, 0, targetBuffer.Length);
+                    originalStream.ReadExactly(originalBuffer, 0, originalBuffer.Length);
+                    targetStream.ReadExactly(targetBuffer, 0, targetBuffer.Length);
 
                     Assert.Equal(originalBuffer, targetBuffer);
 

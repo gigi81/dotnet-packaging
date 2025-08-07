@@ -34,7 +34,7 @@ namespace Packaging.Targets.IO
         /// Default compression preset.
         /// </summary>
         public const uint DefaultPreset = 6;
-        public const uint PresetExtremeFlag = (uint)1 << 31;
+        public const uint PresetExtremeFlag = 1U << 31;
 
         // You can tweak BufSize value to get optimal results
         // of speed and chunk size

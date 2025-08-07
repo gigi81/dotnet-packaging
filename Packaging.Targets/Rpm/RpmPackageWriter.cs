@@ -39,7 +39,7 @@ namespace Packaging.Targets.Rpm
             WriteSection<IndexTag>(stream, package.Header, DefaultOrder.Header);
         }
 
-        public static void WriteSection<K>(Stream stream, Section<K> section, List<K> order)
+        public static void WriteSection<TK>(Stream stream, Section<TK> section, List<TK> order)
         {
             while (stream.Position % 8 != 0)
             {

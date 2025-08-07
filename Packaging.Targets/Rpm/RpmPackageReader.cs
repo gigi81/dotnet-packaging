@@ -40,9 +40,9 @@ namespace Packaging.Targets.Rpm
             return package;
         }
 
-        public static Section<K> ReadSection<K>(Stream stream, Func<IndexHeader, K> getTag)
+        public static Section<TK> ReadSection<TK>(Stream stream, Func<IndexHeader, TK> getTag)
         {
-            Section<K> section = new Section<K>();
+            Section<TK> section = new Section<TK>();
 
             section.Header = stream.ReadStruct<RpmHeader>();
 
