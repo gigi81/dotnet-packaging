@@ -409,9 +409,10 @@ namespace Packaging.Targets.Tests.Rpm
 
                 while (originalStream.Position < originalStream.Length)
                 {
-                    originalStream.ReadExactly(originalBuffer, 0, originalBuffer.Length);
-                    targetStream.ReadExactly(targetBuffer, 0, targetBuffer.Length);
+                    var originalRead = originalStream.Read(originalBuffer, 0, originalBuffer.Length);
+                    var targetRead = targetStream.Read(targetBuffer, 0, targetBuffer.Length);
 
+                    Assert.Equal(originalRead, targetRead);
                     Assert.Equal(originalBuffer, targetBuffer);
 
                     index += originalBuffer.Length;
