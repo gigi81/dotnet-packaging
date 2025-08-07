@@ -1,11 +1,11 @@
 <Project>
   <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <Authors>Frederik Carlier</Authors>
     <Company>Quamotion</Company>
     <Copyright>Copyright (c) Frederik Carlier and Contributors</Copyright>
     <RepositoryType>git</RepositoryType>
     <Product>Packaging Tools for .NET CLI</Product>
-        
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
