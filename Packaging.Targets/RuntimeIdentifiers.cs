@@ -52,7 +52,7 @@ namespace Packaging.Targets
             }
 
             // As a special case, for "linux-musl", we consider "-musl" to be part of the osName
-            int muslSeparator = runtimeId.IndexOf("-musl", versionSeparator + 1);
+            int muslSeparator = runtimeId.IndexOf("-musl", versionSeparator + 1, StringComparison.Ordinal);
             int architectureSeparator = runtimeId.IndexOf('-', muslSeparator + 1);
             if (architectureSeparator >= 0)
             {
@@ -84,7 +84,7 @@ namespace Packaging.Targets
             }
 
             // As a special case, os names like win7, win81 and win10 are processed separately
-            if (osName.StartsWith("win") && osName.Length > 3)
+            if (osName != null && osName.StartsWith("win") && osName.Length > 3)
             {
                 version = osName.Substring(3);
                 osName = "win";
@@ -110,7 +110,7 @@ namespace Packaging.Targets
                     architectureString = "arm";
                 }
 
-                if (Enum.TryParse<Architecture>(architectureString, ignoreCase: true, out Architecture parsedArchitecture))
+                if (Enum.TryParse<Architecture>(architectureString, ignoreCase: true, out var parsedArchitecture))
                 {
                     architecture = parsedArchitecture;
                 }

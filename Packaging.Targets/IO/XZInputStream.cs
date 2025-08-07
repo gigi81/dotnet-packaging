@@ -35,7 +35,7 @@ namespace Packaging.Targets.IO
     public class XZInputStream : Stream
     {
         /// <summary>
-        /// The size of the buffer
+        /// The size of the buffer.
         /// </summary>
         private const int BufSize = 512;
 

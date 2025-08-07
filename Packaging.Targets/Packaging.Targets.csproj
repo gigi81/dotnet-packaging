@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="17.0">
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Description>This package supports the dotnet-pack and dotnet-zip packages. Once you've installed this package together with dotnet-zip or dotnet-tarball, you can run commands such as dotnet zip or dotnet tarball to generate .zip or .tar.gz archives which contain the published output of your project.</Description>
@@ -23,10 +23,10 @@
   
   <ItemGroup>
     <!-- MSBuild ships as part of the .NET CLI -->
-    <PackageReference Include="Microsoft.Build.Framework" Version="17.14.8">
+    <PackageReference Include="Microsoft.Build.Framework" Version="15.9.30">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.8">
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.9.30">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <!-- BoncyCastle and SharpZipLib are included in the lib\ folder in the Packaging.Targets package (see below), so we don't need an
