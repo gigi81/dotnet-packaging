@@ -10,9 +10,14 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+  
   <PropertyGroup>
     <!-- Optional: Embed source files that are not tracked by the source control manager in the PDB -->
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
