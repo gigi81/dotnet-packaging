@@ -3,10 +3,10 @@ name: continuous-integration
 on: [push, pull_request]
 
 jobs:
-  build_noble:
-    name: Build (9.0-noble)
+  build_ubuntu:
+    name: Build (Ubuntu)
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/dotnet/sdk:9.0-noble
+    container: mcr.microsoft.com/dotnet/sdk:9.0
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +34,7 @@ jobs:
           path: ${{ github.workspace }}/artifacts
 
   build_windows:
-    name: Build (Windows 9.0-nanoserver)
+    name: Build (Windows)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 3.1.415
+          dotnet-version: 9.0.x
       - name: Build
         run: |
           dotnet restore dotnet-packaging.sln
@@ -85,81 +85,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - container: mcr.microsoft.com/dotnet/core/sdk:3.1-focal
-            command: deb
-          - container: mcr.microsoft.com/dotnet/core/sdk:3.1-focal
-            command: rpm
-          - container: mcr.microsoft.com/dotnet/core/sdk:3.1-focal
-            command: zip
-          - container: mcr.microsoft.com/dotnet/core/sdk:3.1-focal
-            command: tarball
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-focal
-            command: deb
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-focal
-            command: rpm
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-focal
-            command: zip
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-focal
-            command: tarball
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-buster-slim
-            command: deb
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-buster-slim
-            command: rpm
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-buster-slim
-            command: zip
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-buster-slim
-            command: tarball
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-bullseye-slim
-            command: deb
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-bullseye-slim
-            command: rpm
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-bullseye-slim
-            command: zip
-          - container: mcr.microsoft.com/dotnet/sdk:5.0-bullseye-slim
-            command: tarball
-          - container: mcr.microsoft.com/dotnet/sdk:6.0-focal
-            command: deb
-          - container: mcr.microsoft.com/dotnet/sdk:6.0-focal
-            command: rpm
-          - container: mcr.microsoft.com/dotnet/sdk:6.0-focal
-            command: zip
-          - container: mcr.microsoft.com/dotnet/sdk:6.0-focal
-            command: tarball
-          - container: mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim
-            command: deb
-          - container: mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim
-            command: rpm
-          - container: mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim
-            command: zip
-          - container: mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim
-            command: tarball
-          - container: mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim
-            command: deb
-          - container: mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim
-            command: rpm
-          - container: mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim
-            command: zip
-          - container: mcr.microsoft.com/dotnet/sdk:7.0-bullseye-slim
-            command: tarball
-          - container: mcr.microsoft.com/dotnet/sdk:8.0-jammy
-            command: deb
-          - container: mcr.microsoft.com/dotnet/sdk:8.0-jammy
-            command: rpm
-          - container: mcr.microsoft.com/dotnet/sdk:8.0-jammy
-            command: zip
-          - container: mcr.microsoft.com/dotnet/sdk:8.0-jammy
-            command: tarball
-          - container: mcr.microsoft.com/dotnet/sdk:9.0-noble
-            command: deb
-          - container: mcr.microsoft.com/dotnet/sdk:9.0-noble
-            command: rpm
-          - container: mcr.microsoft.com/dotnet/sdk:9.0-noble
-            command: zip
-          - container: mcr.microsoft.com/dotnet/sdk:9.0-noble
-            command: tarball
+        command: [deb, rpm, zip, tarball]
+        framework: [8.0, 9.0]
     container:
-      image: ${{ matrix.container }}
+      image: mcr.microsoft.com/dotnet/sdk:${{ matrix.framework }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -196,7 +125,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 3.1.415
+          dotnet-version: 9.0.x
       - name: Extract tarball
         run: tar xvzf ${{ github.workspace }}/packages/macos/test-tarball.1.0.0.tar.gz
       - name: Execute program
@@ -210,7 +139,7 @@ jobs:
       fail-fast: false
       matrix:
         suite: [self-contained, framework-dependent]
-        framework: [netcoreapp3.1, net5.0, net6.0, net7.0, net8.0, net9.0]
+        framework: [net8.0, net9.0]
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
