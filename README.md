@@ -117,7 +117,7 @@ WantedBy=multi-user.target
 Add the `my-app.service` file to an `<ItemGroup>` of your `.csproj` with the following content to make sure that it is installed at the right place.
 
 ```
-    <Content Include="my-app.service" CopyToPublishDirectory="PreserveNewest" LinuxFileMode="1555">
+    <Content Include="my-app.service" CopyToPublishDirectory="PreserveNewest" LinuxFileMode="1755">
       <LinuxPath>/etc/systemd/system/my-app.service</LinuxPath>
     </Content>
 ```
