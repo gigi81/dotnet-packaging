@@ -9,6 +9,8 @@ jobs:
     container: mcr.microsoft.com/dotnet/sdk:9.0-noble
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -34,9 +36,10 @@ jobs:
   build_windows:
     name: Build (Windows 9.0-nanoserver)
     runs-on: windows-latest
-    container: mcr.microsoft.com/dotnet/sdk:9.0-nanoserver-1809
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -58,6 +61,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -157,6 +162,8 @@ jobs:
       image: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -179,6 +186,8 @@ jobs:
     needs: build_macos
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
