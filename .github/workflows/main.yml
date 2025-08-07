@@ -22,8 +22,8 @@ jobs:
 
       - name: Build
         run: |
-          dotnet restore dotnet-packaging.sln
-          dotnet pack dotnet-packaging.sln -c Release -o pkg/
+          dotnet restore
+          dotnet pack -c Release -o pkg/
           cp demo/Directory.Build.props pkg/
           cp demo/version.txt pkg/
 
