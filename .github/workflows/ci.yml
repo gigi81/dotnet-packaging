@@ -173,7 +173,7 @@ jobs:
           pip install virtualenv
           virtualenv virtenv
           source virtenv/bin/activate
-          pip install ansible molecule docker wheel pytest testinfra
+          pip install ansible molecule molecule-docker docker wheel pytest testinfra
           ansible --version
           molecule --version
           docker --version
