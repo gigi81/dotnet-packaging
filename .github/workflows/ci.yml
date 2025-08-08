@@ -150,17 +150,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Install molecule and dependencies
-        run: |
-          python -V
-          pip install virtualenv
-          virtualenv virtenv
-          source virtenv/bin/activate
-          pip install ansible molecule docker wheel pytest testinfra
-          ansible --version
-          molecule --version
-          docker --version
-          dotnet --version
       - name: Download NuGet Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -178,8 +167,17 @@ jobs:
           dotnet rpm -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
           dotnet deb -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
         working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
-      - name: Run molecule tests
+      - name: Install molecule and dependencies and run tests
         run: |
+          python -V
+          pip install virtualenv
+          virtualenv virtenv
+          source virtenv/bin/activate
+          pip install ansible molecule docker wheel pytest testinfra
+          ansible --version
+          molecule --version
+          docker --version
+          dotnet --version
           molecule test
         working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
       - name: Publish test results
