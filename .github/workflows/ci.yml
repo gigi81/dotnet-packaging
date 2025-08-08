@@ -18,20 +18,20 @@ jobs:
       - name: Build
         run: |
           dotnet restore dotnet-packaging.sln
-          dotnet pack dotnet-packaging.sln -c Release -o ${{ github.workspace }}/artifacts
-          dotnet test Packaging.Targets.Tests/Packaging.Targets.Tests.csproj --logger "trx;LogFileName=${{ github.workspace }}/artifacts/Packaging.Targets.Tests.trx"
-          cp demo/Directory.Build.props ${{ github.workspace }}/artifacts
-          cp demo/version.txt ${{ github.workspace }}/artifacts
+          dotnet pack dotnet-packaging.sln -c Release -o ./artifacts
+          dotnet test Packaging.Targets.Tests/Packaging.Targets.Tests.csproj --logger "trx;LogFileName=./artifacts/Packaging.Targets.Tests.trx"
+          cp demo/Directory.Build.props ./artifacts
+          cp demo/version.txt ./artifacts
       - name: Publish Test Results
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: ${{ github.workspace }}/artifacts/*.trx
+          path: artifacts/*.trx
       - name: Publish NuGet Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: nuget
-          path: ${{ github.workspace }}/artifacts
+          path: artifacts/*.*nupkg
 
   build_windows:
     name: Build (Windows)
