@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-windows
-          path: ${{ github.workspace }}\artifacts\*.trx
+          path: ${{ github.workspace }}/artifacts/*.trx
 
   build_macos:
     name: Build (macOS)
@@ -72,11 +72,11 @@ jobs:
           dotnet restore dotnet-packaging.sln
           dotnet pack dotnet-packaging.sln -c Release -o ${{ github.workspace }}/artifacts
           dotnet test Packaging.Targets.Tests/Packaging.Targets.Tests.csproj --logger "trx;LogFileName=${{ github.workspace }}/artifacts/Packaging.Targets.Tests.trx"
-      - name: Publish Artifacts
+      - name: Publish Test Results
         uses: actions/upload-artifact@v4
         with:
-          name: packages
-          path: ${{ github.workspace }}/artifacts
+          name: test-results-macos
+          path: ${{ github.workspace }}/artifacts/*.trx
 
   build_package:
     name: Build Package Matrix
@@ -180,8 +180,7 @@ jobs:
         working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
       - name: Run molecule tests
         run: |
-          export PATH=~/.local/bin/:$PATH
-          ~/.local/bin/molecule test
+          molecule test
         working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
       - name: Publish test results
         uses: actions/upload-artifact@v4
