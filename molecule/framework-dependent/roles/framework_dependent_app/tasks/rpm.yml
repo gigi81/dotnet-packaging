@@ -4,14 +4,22 @@
     src: "{{ role_path }}/../../framework-dependent-app.1.0.0.rpm"
     dest: /home/framework-dependent-app.1.0.0.rpm
 
+- name: Set Microsoft repo baseurl
+  set_fact:
+    ms_repo_baseurl: >-
+      https://packages.microsoft.com/yumrepos/microsoft-{{ distro_map[ansible_distribution] | default(ansible_distribution | lower) }}{{ ansible_distribution_major_version }}-prod
+  vars:
+    distro_map:
+      Rocky: rhel
+      AlmaLinux: rhel
+      CentOS: centos
+      RedHat: rhel
+
 - name: Add .NET repository
   yum_repository:
     name: packages-microsoft-com-prod
     description: Microsoft .NET RHEL Repository
-    # https://packages.microsoft.com/yumrepos/microsoft-centos7-prod/
-    # https://packages.microsoft.com/yumrepos/microsoft-fedora29-prod/
-    # https://packages.microsoft.com/yumrepos/microsoft-fedora30-prod/
-    baseurl: https://packages.microsoft.com/yumrepos/microsoft-{{ ansible_distribution | lower }}{{ ansible_distribution_major_version }}-prod
+    baseurl: "{{ ms_repo_baseurl }}"
     enabled: true
     gpgcheck: true
     gpgkey: https://packages.microsoft.com/keys/microsoft.asc

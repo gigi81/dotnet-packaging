@@ -5,6 +5,7 @@
     <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <RootNamespace>self_contained_app</RootNamespace>
     <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
