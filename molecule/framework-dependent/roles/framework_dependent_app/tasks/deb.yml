@@ -21,8 +21,7 @@
 - name: Convert Microsoft GPG key to binary format
   ansible.builtin.command:
     cmd: >
-      gpg --dearmor /usr/share/keyrings/microsoft.asc
-      --output /usr/share/keyrings/microsoft.gpg
+      gpg --output /usr/share/keyrings/microsoft.gpg --dearmor /usr/share/keyrings/microsoft.asc
   args:
     creates: /usr/share/keyrings/microsoft.gpg
 
