@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  role_name: framework_dependent_app
+  role_name: framework-dependent
   namespace: qmfrederik
   author: Frederik Carlier
   description: |

@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  role_name: self_contained_app
+  role_name: self-contained
   namespace: qmfrederik
   author: Frederik Carlier
   description: |
