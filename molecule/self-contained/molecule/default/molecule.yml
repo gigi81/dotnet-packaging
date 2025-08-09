@@ -35,8 +35,8 @@ platforms:
     image: fedora:41
   - name: fedora.42
     image: fedora:42
-#  - name: rockylinux.8
-#    image: rockylinux/rockylinux:8
+  - name: rockylinux.8
+    image: rockylinux/rockylinux:8
   - name: rockylinux.9
     image: rockylinux/rockylinux:9
   - name: rockylinux.10
