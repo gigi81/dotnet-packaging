@@ -107,7 +107,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [self-contained, framework-dependent]
+        suite: [self_contained_app, framework_dependent_app]
         framework: ['net8.0', 'net9.0']
     steps:
       - uses: actions/checkout@v4
