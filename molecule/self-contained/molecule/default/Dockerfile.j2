@@ -6,6 +6,7 @@ FROM {{ item.registry.url }}/{{ item.image }}
 FROM {{ item.image }}
 {% endif %}
 
-RUN if [ $(command -v apt) ]; then apt update && apt install -y python3 sudo bash ca-certificates iproute2 && apt-get clean; \
-    elif [ $(command -v dnf) ]; then dnf makecache && dnf --assumeyes install python sudo python-devel python*-dnf bash iproute python3-libdnf5 && dnf clean all; \
+# install python3 and other dependencies
+RUN if [ $(command -v apt) ]; then apt update && apt install -y python3 sudo bash ca-certificates iproute2 && apt clean; \
+    elif [ $(command -v dnf) ]; then dnf makecache && dnf --assumeyes install python sudo python-devel python*-dnf bash iproute python3-dnf && dnf clean all; \
     elif [ $(command -v zypper) ]; then zypper refresh && zypper install -y python3 python3-pip sudo bash iproute2 && zypper clean -a; fi
