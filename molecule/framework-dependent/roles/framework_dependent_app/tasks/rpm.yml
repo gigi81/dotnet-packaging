@@ -1,7 +1,7 @@
 ---
 - name: Copy framework-dependent app to guest
   copy:
-    src: "{{ role_path }}/framework-dependent-app.1.0.0.rpm"
+    src: "{{ role_path }}/../../framework-dependent-app.1.0.0.rpm"
     dest: /home/framework-dependent-app.1.0.0.rpm
 
 - name: Add .NET repository
