@@ -53,6 +53,3 @@ verifier:
   name: testinfra
   options:
     junitxml: pytest.xml
-  lint: |
-    set -e
-    flake8

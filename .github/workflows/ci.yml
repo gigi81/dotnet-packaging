@@ -78,37 +78,6 @@ jobs:
           name: test-results-macos
           path: ${{ github.workspace }}/artifacts/*.trx
 
-  build_package:
-    name: Build Package Matrix
-    runs-on: ubuntu-latest
-    needs: build_ubuntu
-    strategy:
-      fail-fast: false
-      matrix:
-        command: [deb, rpm, zip, tarball]
-        framework: ['8.0', '9.0']
-    container:
-      image: mcr.microsoft.com/dotnet/sdk:${{ matrix.framework }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-      - name: Build Package
-        run: |
-          dotnet restore dotnet-packaging.sln
-          dotnet build dotnet-packaging.sln -c Release
-          dotnet pack dotnet-packaging.sln -c Release -o ${{ github.workspace }}/artifacts
-          # Add custom build logic for ${{ matrix.command }} if needed
-      - name: Publish Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-package-${{ matrix.container }}-${{ matrix.command }}
-          path: ${{ github.workspace }}/artifacts
-
   test_macos:
     name: Test (macOS)
     runs-on: macos-latest
@@ -118,7 +87,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: packages
           path: ${{ github.workspace }}/packages
@@ -151,7 +120,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Download NuGet Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: nuget
           path: ${{ github.workspace }}/nuget
@@ -187,15 +156,46 @@ jobs:
           name: molecule-test-results
           path: ${{ github.workspace }}/molecule/${{ matrix.suite }}/molecule/default/pytest.xml
 
+  build_package:
+    name: Build Package Matrix
+    runs-on: ubuntu-latest
+    needs: build_ubuntu
+    strategy:
+      fail-fast: false
+      matrix:
+        command: [deb, rpm, zip, tarball]
+        framework: ['8.0', '9.0']
+    container:
+      image: mcr.microsoft.com/dotnet/sdk:${{ matrix.framework }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Build Package
+        run: |
+          dotnet restore dotnet-packaging.sln
+          dotnet build dotnet-packaging.sln -c Release
+          dotnet pack dotnet-packaging.sln -c Release -o ${{ github.workspace }}/artifacts
+          # Add custom build logic for ${{ matrix.command }} if needed
+      - name: Publish Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-package-${{ matrix.container }}-${{ matrix.command }}
+          path: ${{ github.workspace }}/artifacts
+
   publish_nuget:
     name: Publish NuGet
     runs-on: windows-latest
-    needs: [test_macos, molecule]
+    needs: [test_macos, molecule, build_package]
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
       - name: Download NuGet Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: nuget
           path: ${{ github.workspace }}/nuget
