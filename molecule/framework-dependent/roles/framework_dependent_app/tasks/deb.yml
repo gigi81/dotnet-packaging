@@ -17,6 +17,8 @@
     url: https://packages.microsoft.com/keys/microsoft.asc
     dest: /usr/share/keyrings/microsoft.asc
     mode: '0644'
+  when:
+    - ansible_distribution == "Debian"
 
 - name: Convert Microsoft GPG key to binary format
   ansible.builtin.command:
@@ -24,12 +26,8 @@
       gpg --output /usr/share/keyrings/microsoft.gpg --dearmor /usr/share/keyrings/microsoft.asc
   args:
     creates: /usr/share/keyrings/microsoft.gpg
-
-- name: Add Microsoft APT repository (VS Code)
-  ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main"
-    state: present
-    filename: 'microsoft'
+  when:
+    - ansible_distribution == "Debian"
 
 - name: Add .NET Core APT repository
   ansible.builtin.apt_repository:
@@ -39,6 +37,24 @@
       {{ ansible_distribution_release | lower }} main
     filename: "dotnetdev"
     state: present
+  when:
+    - ansible_distribution == "Debian"
+
+# Workaround for Ubuntu 24.04 so that we can install dotnet 9.0
+- name: Add dotnet backports PPA
+  ansible.builtin.apt_repository:
+    repo: "ppa:dotnet/backports"
+    state: present
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_version in ["22.04", "24.04"]
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_version in ["22.04", "24.04"]
 
 - name: Install framework-dependent app
   become: true
