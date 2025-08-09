@@ -5,156 +5,21 @@ on: [push, pull_request]
 jobs:
   build_ubuntu:
     name: Build (Ubuntu)
-    runs-on: ubuntu-latest
-    container: mcr.microsoft.com/dotnet/sdk:9.0
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-      - name: Build
-        run: |
-          dotnet restore dotnet-packaging.sln
-          dotnet pack dotnet-packaging.sln -c Release -o ./artifacts/
-          dotnet test Packaging.Targets.Tests/Packaging.Targets.Tests.csproj --logger "trx;LogFileName=./Packaging.Targets.Tests.trx"
-          cp demo/Directory.Build.props ./artifacts/
-          cp demo/version.txt ./artifacts/
-      - name: Publish Test Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: ./*.trx
-      - name: Publish NuGet Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: nuget
-          path: artifacts/*.*
+    uses: ./.github/workflows/build-template.yml
+    with:
+      runs-on: ubuntu
 
   build_windows:
     name: Build (Windows)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-      - name: Build
-        shell: pwsh
-        run: |
-          dotnet restore dotnet-packaging.sln
-          dotnet pack dotnet-packaging.sln -c Release -o $env:GITHUB_WORKSPACE\artifacts
-          dotnet test Packaging.Targets.Tests/Packaging.Targets.Tests.csproj --logger "trx;LogFileName=$env:GITHUB_WORKSPACE\artifacts\Packaging.Targets.Tests.trx"
-      - name: Publish Test Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-windows
-          path: ${{ github.workspace }}/artifacts/*.trx
+    uses: ./.github/workflows/build_ubuntu.yml
+    with:
+      runs-on: windows
 
   build_macos:
     name: Build (macOS)
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-      - name: Build
-        run: |
-          dotnet restore dotnet-packaging.sln
-          dotnet pack dotnet-packaging.sln -c Release -o ${{ github.workspace }}/artifacts
-          dotnet test Packaging.Targets.Tests/Packaging.Targets.Tests.csproj --logger "trx;LogFileName=${{ github.workspace }}/artifacts/Packaging.Targets.Tests.trx"
-      - name: Publish Test Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-macos
-          path: ${{ github.workspace }}/artifacts/*.trx
-
-  test_macos:
-    name: Test (macOS)
-    runs-on: macos-latest
-    needs: build_macos
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Download Artifacts
-        uses: actions/download-artifact@v5
-        with:
-          name: nuget
-          path: ${{ github.workspace }}/nuget
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-      - name: Extract tarball
-        run: tar xvzf ${{ github.workspace }}/nuget/macos/test-tarball.1.0.0.tar.gz
-      - name: Execute program
-        run: dotnet ./test-tarball.dll
-
-  molecule:
-    name: Molecule Matrix
-    runs-on: ubuntu-latest 
-    needs: build_ubuntu
-    strategy:
-      fail-fast: false
-      matrix:
-        suite: [self-contained, framework-dependent]
-        framework: ['net8.0', 'net9.0']
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9.0.x
-      - name: Install Python and pip
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-      - name: Download NuGet Artifacts
-        uses: actions/download-artifact@v5
-        with:
-          name: nuget
-          path: ${{ github.workspace }}/nuget
-      - name: Build ${{ matrix.suite }}-app for ${{ matrix.framework }}
-        run: |
-          export PATH="$PATH:$HOME/.dotnet/tools"
-          cd ${{ matrix.suite }}-app
-          echo "<configuration><packageSources><add key='local' value='${{ github.workspace }}/nuget' /></packageSources></configuration>" > NuGet.config
-          version=$(cat ${{ github.workspace }}/nuget/version.txt)
-          dotnet tool install --global dotnet-deb --version $version --add-source ${{ github.workspace }}/nuget
-          dotnet tool install --global dotnet-rpm --version $version --add-source ${{ github.workspace }}/nuget
-          dotnet rpm install
-          dotnet rpm -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
-          dotnet deb -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
-        working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
-      - name: Install molecule and dependencies and run tests
-        run: |
-          python -V
-          pip install virtualenv
-          virtualenv virtenv
-          source virtenv/bin/activate
-          pip install ansible molecule molecule-docker docker wheel pytest testinfra yamllint
-          ansible --version
-          molecule --version
-          docker --version
-          dotnet --version
-          yamllint -c .yamllint molecule/default/molecule.yml
-          molecule test
-        working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
-      - name: Publish test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: molecule-test-results-${{ matrix.suite }}-${{ matrix.framework }}
-          path: ${{ github.workspace }}/molecule/${{ matrix.suite }}/molecule/default/pytest.xml
+    uses: ./.github/workflows/build_ubuntu.yml
+    with:
+      runs-on: macos
 
   build_package:
     name: Build Package Matrix
@@ -187,15 +52,92 @@ jobs:
           name: build-package-${{ matrix.container }}-${{ matrix.command }}
           path: ${{ github.workspace }}/artifacts
 
+  test_macos:
+    name: Test (macOS)
+    runs-on: macos-latest
+    needs: build_macos
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: packages
+          path: ${{ github.workspace }}/packages
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Extract tarball
+        run: tar xvzf ${{ github.workspace }}/packages/macos/test-tarball.1.0.0.tar.gz
+      - name: Execute program
+        run: dotnet ./test-tarball.dll
+
+  molecule:
+    name: Molecule Matrix
+    runs-on: ubuntu-latest 
+    needs: build_ubuntu
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [self-contained, framework-dependent]
+        framework: ['net8.0', 'net9.0']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Install Python and pip
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Download NuGet Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: ${{ github.workspace }}/nuget
+      - name: Build ${{ matrix.suite }}-app for ${{ matrix.framework }}
+        run: |
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          cd ${{ matrix.suite }}-app
+          echo "<configuration><packageSources><add key='local' value='${{ github.workspace }}/nuget' /></packageSources></configuration>" > NuGet.config
+          version=$(cat ${{ github.workspace }}/nuget/version.txt)
+          dotnet tool install --global dotnet-deb --version $version --add-source ${{ github.workspace }}/nuget
+          dotnet tool install --global dotnet-rpm --version           name: molecule-test-results-${{ matrix.suite }}-${{ matrix.framework }}space }}/nuget
+          dotnet rpm install
+          dotnet rpm -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
+          dotnet deb -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
+        working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
+      - name: Install molecule and dependencies and run tests
+        run: |
+          python -V
+          pip install virtualenv
+          virtualenv virtenv
+          source virtenv/bin/activate
+          pip install ansible molecule molecule-docker docker wheel pytest testinfra
+          ansible --version
+          molecule --version
+          docker --version
+          dotnet --version
+          molecule test
+        working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
+      - name: Publish test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: molecule-test-results
+          path: ${{ github.workspace }}/molecule/${{ matrix.suite }}/molecule/default/pytest.xml
+
   publish_nuget:
     name: Publish NuGet
     runs-on: windows-latest
-    needs: [test_macos, molecule, build_package]
+    needs: [test_macos, molecule]
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
       - name: Download NuGet Artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           name: nuget
           path: ${{ github.workspace }}/nuget
