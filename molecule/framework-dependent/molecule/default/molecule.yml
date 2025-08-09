@@ -37,6 +37,9 @@ provisioner:
   name: ansible
   env:
     ANSIBLE_ROLES_PATH: ../../roles
+    ANSIBLE_RETRY_FILES_ENABLED: "false"
+    ANSIBLE_SSH_RETRIES: "1"
+    ANSIBLE_TIMEOUT: "10"
   lint: |
     set -e
     ansible-lint
