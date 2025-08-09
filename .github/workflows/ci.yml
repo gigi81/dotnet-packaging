@@ -153,7 +153,7 @@ jobs:
       - name: Publish test results
         uses: actions/upload-artifact@v4
         with:
-          name: molecule-test-results
+          name: molecule-test-results-${{ matrix.suite }}-${{ matrix.framework }}
           path: ${{ github.workspace }}/molecule/${{ matrix.suite }}/molecule/default/pytest.xml
 
   build_package:
