@@ -89,14 +89,14 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v5
         with:
-          name: packages
-          path: ${{ github.workspace }}/packages
+          name: nuget
+          path: ${{ github.workspace }}/nuget
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
       - name: Extract tarball
-        run: tar xvzf ${{ github.workspace }}/packages/macos/test-tarball.1.0.0.tar.gz
+        run: tar xvzf ${{ github.workspace }}/nuget/macos/test-tarball.1.0.0.tar.gz
       - name: Execute program
         run: dotnet ./test-tarball.dll
 
