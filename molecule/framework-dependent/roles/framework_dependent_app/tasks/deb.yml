@@ -12,18 +12,24 @@
       - apt-transport-https
       - ca-certificates
 
-- name: Import Microsoft APT key
-  apt_key:
+- name: Download Microsoft GPG key to keyring
+  ansible.builtin.get_url:
     url: https://packages.microsoft.com/keys/microsoft.asc
-    state: present
+    dest: /usr/share/keyrings/microsoft.gpg
+    mode: '0644'
 
-- name: Add .NET Core repo
-  apt_repository:
+- name: Add Microsoft APT repository (VS Code)
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/code stable main"
+    state: present
+    filename: 'microsoft'
+
+- name: Add .NET Core APT repository
+  ansible.builtin.apt_repository:
     repo: >
-      deb [arch=amd64]
+      deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg]
       https://packages.microsoft.com/repos/microsoft-{{ ansible_distribution | lower }}-{{ ansible_distribution_release | lower }}-prod
-      {{ ansible_distribution_release | lower }}
-      main
+      {{ ansible_distribution_release | lower }} main
     filename: "dotnetdev"
     state: present
 
