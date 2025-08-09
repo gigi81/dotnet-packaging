@@ -173,11 +173,12 @@ jobs:
           pip install virtualenv
           virtualenv virtenv
           source virtenv/bin/activate
-          pip install ansible molecule molecule-docker docker wheel pytest testinfra
+          pip install ansible molecule molecule-docker docker wheel pytest testinfra yamllint
           ansible --version
           molecule --version
           docker --version
           dotnet --version
+          yamllint -c .yamllint molecule/default/molecule.yml
           molecule test
         working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
       - name: Publish test results
