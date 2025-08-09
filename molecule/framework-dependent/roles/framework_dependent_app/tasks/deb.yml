@@ -15,8 +15,16 @@
 - name: Download Microsoft GPG key to keyring
   ansible.builtin.get_url:
     url: https://packages.microsoft.com/keys/microsoft.asc
-    dest: /usr/share/keyrings/microsoft.gpg
+    dest: /usr/share/keyrings/microsoft.asc
     mode: '0644'
+
+- name: Convert Microsoft GPG key to binary format
+  ansible.builtin.command:
+    cmd: >
+      gpg --dearmor /usr/share/keyrings/microsoft.asc
+      --output /usr/share/keyrings/microsoft.gpg
+  args:
+    creates: /usr/share/keyrings/microsoft.gpg
 
 - name: Add Microsoft APT repository (VS Code)
   ansible.builtin.apt_repository:

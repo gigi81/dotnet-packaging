@@ -11,3 +11,4 @@
     or ansible_distribution == 'OracleLinux'
     or ansible_distribution == 'Fedora'
     or ansible_distribution == 'openSUSE Leap'
+    or ansible_distribution == 'rockylinux'
