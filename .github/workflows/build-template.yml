@@ -23,21 +23,19 @@ jobs:
           dotnet restore
           dotnet pack -c Release -o ./artifacts/
           dotnet test Packaging.Targets.Tests/Packaging.Targets.Tests.csproj --logger "trx;LogFileName=./Packaging.Targets.Tests.trx"
-          cp demo/Directory.Build.props ./artifacts/
-          cp demo/version.txt ./artifacts/
       - name: Publish Test Results
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ inputs.runs-on }}
           path: ./*.trx
       - name: Copy version.txt and Directory.Build.props
-        if: ${{ inputs.runs-on }} == 'ubuntu'
+        if: ${{ inputs.runs-on == 'ubuntu' }}
         run: |
           cp demo/Directory.Build.props ./artifacts/
           cp demo/version.txt ./artifacts/
       - name: Publish NuGet Artifacts
+        if: ${{ inputs.runs-on == 'ubuntu' }}
         uses: actions/upload-artifact@v4
-        if: ${{ inputs.runs-on }} == 'ubuntu'
         with:
           name: nuget
           path: artifacts/*.*
