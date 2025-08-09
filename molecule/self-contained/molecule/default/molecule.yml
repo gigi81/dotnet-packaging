@@ -45,7 +45,7 @@ platforms:
 provisioner:
   name: ansible
   env:
-      ANSIBLE_ROLES_PATH: ../../roles
+    ANSIBLE_ROLES_PATH: ../../roles
   lint: |
     set -e
     ansible-lint
