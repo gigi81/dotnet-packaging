@@ -145,27 +145,25 @@ namespace Packaging.Targets.Tests.Rpm
         public void CalculateSignatureTest()
 #pragma warning restore CA1506
         {
-            using Stream stream = File.OpenRead(@"Rpm/libplist-2.0.1.151-1.1.x86_64.rpm");
+            using var stream = File.OpenRead(@"Rpm/libplist-2.0.1.151-1.1.x86_64.rpm");
             var originalPackage = RpmPackageReader.Read(stream);
+            var creator = new RpmPackageCreator(new PlistFileAnalyzer());
 
-            RpmPackageCreator creator = new RpmPackageCreator(new PlistFileAnalyzer());
-            Collection<RpmFile> files;
-
-            using (var payloadStream = RpmPayloadReader.GetDecompressedPayloadStream(originalPackage))
-            using (var cpio = new CpioFile(payloadStream, false))
-            {
-                ArchiveBuilder builder = new ArchiveBuilder(new PlistFileAnalyzer());
-                var entries = builder.FromCpio(cpio);
-                files = creator.CreateFiles(entries);
-            }
+            using var payloadStream = RpmPayloadReader.GetDecompressedPayloadStream(originalPackage);
+            using var cpio = new CpioFile(payloadStream, false);
+            var builder = new ArchiveBuilder(new PlistFileAnalyzer());
+            var entries = builder.FromCpio(cpio);
+            var files = creator.CreateFiles(entries);
 
             // Core routine to populate files and dependencies
-            RpmPackage package = new RpmPackage();
-            var metadata = new PublicRpmMetadata(package);
-            metadata.Name = "libplist";
-            metadata.Version = "2.0.1.151";
-            metadata.Arch = "x86_64";
-            metadata.Release = "1.1";
+            var package = new RpmPackage();
+            var metadata = new PublicRpmMetadata(package)
+            {
+                Name = "libplist",
+                Version = "2.0.1.151",
+                Arch = "x86_64",
+                Release = "1.1"
+            };
 
             creator.AddPackageProvides(metadata);
             creator.AddLdDependencies(metadata);
@@ -190,11 +188,11 @@ namespace Packaging.Targets.Tests.Rpm
                        readOnly: true))
             using (Stream headerStream = creator.GetHeaderStream(package))
             {
-                byte[] originalData = new byte[originalHeaderStream.Length];
+                var originalData = new byte[originalHeaderStream.Length];
                 originalHeaderStream.ReadExactly(originalData);
 
-                byte[] data = new byte[headerStream.Length];
-                headerStream.ReadExactly(data, 0, data.Length);
+                var data = new byte[headerStream.Length];
+                headerStream.ReadExactly(data);
 
                 int delta = 0;
                 int dataDelta = 0;
@@ -218,25 +216,23 @@ namespace Packaging.Targets.Tests.Rpm
             var secretKeyRing = krgen.GenerateSecretKeyRing();
             var privateKey = secretKeyRing.GetSecretKey().ExtractPrivateKey("dotnet".ToCharArray());
 
-            using (var payload = RpmPayloadReader.GetCompressedPayloadStream(originalPackage))
+            using var payload = RpmPayloadReader.GetCompressedPayloadStream(originalPackage);
+            // Header should be OK now (see previous test), so now get the signature block and the
+            // trailer
+            creator.CalculateSignature(package, privateKey, payload);
+            creator.CalculateSignatureOffsets(package);
+
+            foreach (var record in originalPackage.Signature.Records)
             {
-                // Header should be OK now (see previous test), so now get the signature block and the
-                // trailer
-                creator.CalculateSignature(package, privateKey, payload);
-                creator.CalculateSignatureOffsets(package);
-
-                foreach (var record in originalPackage.Signature.Records)
+                if (record.Key == SignatureTag.RPMTAG_HEADERSIGNATURES)
                 {
-                    if (record.Key == SignatureTag.RPMTAG_HEADERSIGNATURES)
-                    {
-                        continue;
-                    }
-
-                    this.AssertTagEqual(record.Key, originalPackage, package);
+                    continue;
                 }
 
                 this.AssertTagEqual(SignatureTag.RPMTAG_HEADERSIGNATURES, originalPackage, package);
             }
+
+            this.AssertTagEqual(SignatureTag.RPMTAG_HEADERSIGNATURES, originalPackage, package);
         }
 
         /// <summary>
