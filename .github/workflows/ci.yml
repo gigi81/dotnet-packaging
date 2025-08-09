@@ -124,10 +124,10 @@ jobs:
         with:
           name: nuget
           path: ${{ github.workspace }}/nuget
-      - name: Build ${{ matrix.suite }}-app for ${{ matrix.framework }}
+      - name: Build ${{ matrix.suite }} for ${{ matrix.framework }}
         run: |
           export PATH="$PATH:$HOME/.dotnet/tools"
-          cd ${{ matrix.suite }}-app
+          cd ${{ matrix.suite }}
           echo "<configuration><packageSources><add key='local' value='${{ github.workspace }}/nuget' /></packageSources></configuration>" > NuGet.config
           version=$(cat ${{ github.workspace }}/nuget/version.txt)
           dotnet tool install --global dotnet-deb --version $version --add-source ${{ github.workspace }}/nuget
