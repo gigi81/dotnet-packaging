@@ -98,7 +98,7 @@ jobs:
   publish_nuget:
     name: Publish NuGet
     runs-on: windows-latest
-    needs: [test_macos, molecule]
+    needs: [test_macos]
     if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
