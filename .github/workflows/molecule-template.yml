@@ -6,7 +6,6 @@ jobs:
   molecule:
     name: Molecule Matrix
     runs-on: ubuntu-latest
-    needs: build_ubuntu
     strategy:
       matrix:
         suite: [self-contained, framework-dependent]
@@ -35,7 +34,7 @@ jobs:
 
           dotnet tool install --global dotnet-deb --version $version --add-source ${{ github.workspace }}/nuget
           dotnet tool install --global dotnet-rpm --version $version --add-source ${{ github.workspace }}/nuget
-          
+
           dotnet rpm install
           dotnet rpm -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f net${{ matrix.framework }}
           dotnet deb -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f net${{ matrix.framework }}
