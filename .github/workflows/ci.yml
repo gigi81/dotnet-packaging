@@ -105,7 +105,7 @@ jobs:
           echo "<configuration><packageSources><add key='local' value='${{ github.workspace }}/nuget' /></packageSources></configuration>" > NuGet.config
           version=$(cat ${{ github.workspace }}/nuget/version.txt)
           dotnet tool install --global dotnet-deb --version $version --add-source ${{ github.workspace }}/nuget
-          dotnet tool install --global dotnet-rpm --version           name: molecule-test-results-${{ matrix.suite }}-${{ matrix.framework }}space }}/nuget
+          dotnet tool install --global dotnet-rpm --version $version --add-source ${{ github.workspace }}/nuget
           dotnet rpm install
           dotnet rpm -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
           dotnet deb -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
