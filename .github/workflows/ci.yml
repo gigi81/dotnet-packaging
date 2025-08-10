@@ -52,6 +52,7 @@ jobs:
           mkdir test
           cd test
 
+          ls -lF ${{ github.workspace }}/nuget/
           echo "<configuration><packageSources><add key='local' value='${{ github.workspace }}/nuget' /></packageSources></configuration>" > NuGet.config
           version=$(cat ${{ github.workspace }}/nuget/version.txt)
 

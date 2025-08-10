@@ -10,13 +10,13 @@ jobs:
     strategy:
       matrix:
         suite: [self-contained, framework-dependent]
-        framework: ['net8.0', 'net9.0']
+        framework: ['8.0', '9.0']
     steps:
       - uses: actions/checkout@v4
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: ${{ matrix.framework }}.x
       - name: Install Python and pip
         uses: actions/setup-python@v5
         with:
@@ -26,17 +26,19 @@ jobs:
         with:
           name: nuget
           path: ${{ github.workspace }}/nuget
-      - name: Build ${{ matrix.suite }}-app for ${{ matrix.framework }}
+      - name: Build ${{ matrix.suite }}-app for net${{ matrix.framework }}
         run: |
           export PATH="$PATH:$HOME/.dotnet/tools"
           cd ${{ matrix.suite }}-app
           echo "<configuration><packageSources><add key='local' value='${{ github.workspace }}/nuget' /></packageSources></configuration>" > NuGet.config
           version=$(cat ${{ github.workspace }}/nuget/version.txt)
+
           dotnet tool install --global dotnet-deb --version $version --add-source ${{ github.workspace }}/nuget
           dotnet tool install --global dotnet-rpm --version $version --add-source ${{ github.workspace }}/nuget
+          
           dotnet rpm install
-          dotnet rpm -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
-          dotnet deb -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
+          dotnet rpm -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f net${{ matrix.framework }}
+          dotnet deb -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f net${{ matrix.framework }}
         working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
       - name: Install molecule and dependencies and run tests
         run: |
