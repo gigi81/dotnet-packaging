@@ -29,8 +29,6 @@ jobs:
       matrix:
         command: [deb, rpm, zip, tarball]
         framework: ['8.0', '9.0']
-    container:
-      image: mcr.microsoft.com/dotnet/sdk:${{ matrix.framework }}
     steps:
       - uses: actions/checkout@v4
         with:
