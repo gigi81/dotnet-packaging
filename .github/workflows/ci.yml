@@ -58,7 +58,7 @@ jobs:
           dotnet tool install --global dotnet-${{ matrix.command }} --version $version --add-source ${{ github.workspace }}/nuget
 
           # Create a new console application
-          dotnet new console
+          dotnet new console --framework net${{ matrix.framework }}
 
           # Install and use dotnet ${{ matrix.command }}
           dotnet ${{ matrix.command }} install
@@ -92,9 +92,9 @@ jobs:
       - name: Extract tarball
         run: |
           ls -lF ${{ github.workspace }}/packages/
-          tar xvzf ${{ github.workspace }}/packages/test-tarball.1.0.0.tar.gz
+          tar xvzf ${{ github.workspace }}/packages/test.1.0.0.tar.gz
       - name: Execute program
-        run: dotnet ./test-tarball.dll
+        run: dotnet ./test.dll
 
   publish_nuget:
     name: Publish NuGet
