@@ -51,7 +51,7 @@ jobs:
           cd test
 
           # Create a new console application
-          dotnet new console --framework net${{ matrix.framework }}
+          dotnet new console --framework net${{ matrix.framework }} --no-restore
 
           ls -lF ${{ github.workspace }}/nuget/
           echo "<configuration><packageSources><add key='local' value='${{ github.workspace }}/nuget' /></packageSources></configuration>" > NuGet.config
