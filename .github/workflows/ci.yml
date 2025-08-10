@@ -39,23 +39,46 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: "${{ matrix.framework }}.x"
+      - name: Download NuGet Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: ${{ github.workspace }}/nuget
       - name: Build Package
         run: |
-          dotnet restore dotnet-packaging.sln
-          dotnet build dotnet-packaging.sln -c Release
-          dotnet pack dotnet-packaging.sln -c Release -o ${{ github.workspace }}/artifacts
-          # Add custom build logic for ${{ matrix.command }} if needed
-      - name: Publish Artifacts
+          set -e
+          export PATH="$PATH:/$HOME/.dotnet/tools"
+
+          mkdir test-${{ matrix.command }}/
+          cd test
+
+          echo "<configuration><packageSources><add key='local' value='${{ github.workspace }}/nuget' /></packageSources></configuration>" > NuGet.config
+          version=$(cat ${{ github.workspace }}/nuget/version.txt)
+
+          # Install the dotnet-${{ matrix.command }} tool
+          dotnet tool install --global dotnet-${{ matrix.command }} --version $version --add-source ${{ github.workspace }}/nuget
+
+          # Create a new console application
+          dotnet new console
+
+          # Install and use dotnet ${{ matrix.command }}
+          dotnet ${{ matrix.command }} install
+          dotnet ${{ matrix.command }} -o ${{ github.workspace }}/packages/
+      - name: Publish Packages
         uses: actions/upload-artifact@v4
         with:
-          name: build-package-${{ matrix.container }}-${{ matrix.command }}
-          path: ${{ github.workspace }}/artifacts
+          name: build-package-${{ matrix.command }}-${{ matrix.framework }}
+          path: ${{ github.workspace }}/packages
 
   test_macos:
     name: Test (macOS)
     runs-on: macos-latest
-    needs: build_macos
+    needs: build_package
+    strategy:
+      fail-fast: false
+      matrix:
+        framework: ['8.0', '9.0']
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,14 +86,14 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: packages
+          name: build-package-tarball-${{ matrix.framework }}
           path: ${{ github.workspace }}/packages
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
       - name: Extract tarball
-        run: tar xvzf ${{ github.workspace }}/packages/macos/test-tarball.1.0.0.tar.gz
+        run: tar xvzf ${{ github.workspace }}/packages/test-tarball.1.0.0.tar.gz
       - name: Execute program
         run: dotnet ./test-tarball.dll
 
