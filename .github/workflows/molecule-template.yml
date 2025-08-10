@@ -1,0 +1,58 @@
+name: Molecule
+
+on: [workflow_call]
+
+jobs:
+  molecule:
+    name: Molecule Matrix
+    runs-on: ubuntu-latest
+    needs: build_ubuntu
+    strategy:
+      matrix:
+        suite: [self-contained, framework-dependent]
+        framework: ['net8.0', 'net9.0']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Install Python and pip
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Download NuGet Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: ${{ github.workspace }}/nuget
+      - name: Build ${{ matrix.suite }}-app for ${{ matrix.framework }}
+        run: |
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          cd ${{ matrix.suite }}-app
+          echo "<configuration><packageSources><add key='local' value='${{ github.workspace }}/nuget' /></packageSources></configuration>" > NuGet.config
+          version=$(cat ${{ github.workspace }}/nuget/version.txt)
+          dotnet tool install --global dotnet-deb --version $version --add-source ${{ github.workspace }}/nuget
+          dotnet tool install --global dotnet-rpm --version $version --add-source ${{ github.workspace }}/nuget
+          dotnet rpm install
+          dotnet rpm -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
+          dotnet deb -o ${{ github.workspace }}/molecule/${{ matrix.suite }}/ -f ${{ matrix.framework }}
+        working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
+      - name: Install molecule and dependencies and run tests
+        run: |
+          python -V
+          pip install virtualenv
+          virtualenv virtenv
+          source virtenv/bin/activate
+          pip install ansible molecule molecule-docker docker wheel pytest testinfra
+          ansible --version
+          molecule --version
+          docker --version
+          dotnet --version
+          molecule test
+        working-directory: ${{ github.workspace }}/molecule/${{ matrix.suite }}
+      - name: Publish test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: molecule-test-results-${{ matrix.suite }}-${{ matrix.framework }}
+          path: ${{ github.workspace }}/molecule/${{ matrix.suite }}/molecule/default/pytest.xml
